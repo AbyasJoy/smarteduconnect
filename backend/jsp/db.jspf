@@ -1,0 +1,9 @@
+<%@ page import="java.sql.*" %>
+<%
+String URL="jdbc:mysql://localhost:3306/smarteduconnect?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+String USER="root";
+String PASS="Joy@1234"; 
+
+Class.forName("com.mysql.cj.jdbc.Driver");
+Connection con = DriverManager.getConnection(URL, USER, PASS);
+%>

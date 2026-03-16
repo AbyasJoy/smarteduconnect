@@ -1,0 +1,6 @@
+<div class="topbar">
+  <h2>SmartEduConnect</h2>
+  <div class="user-meta">
+    Role: <%= session.getAttribute("role") != null ? session.getAttribute("role").toString().toUpperCase() : "GUEST" %>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+<%
+String currentRole = (String) session.getAttribute("role");
+%>
+
+<div class="sidebar">
+  <div class="brand">SmartEduConnect</div>
+
+  <a href="dashboard.jsp">Dashboard</a>
+
+  <% if ("admin".equalsIgnoreCase(currentRole)) { %>
+      <a href="addStudent.jsp">Add Student</a>
+      <a href="listStudents.jsp">Students</a>
+      <a href="addFaculty.jsp">Add Faculty</a>
+      <a href="listFaculty.jsp">Faculty</a>
+      <a href="addCourse.jsp">Courses</a>
+      <a href="assignCourseFaculty.jsp">Assign Courses</a>
+  <% } %>
+
+  <% if ("faculty".equalsIgnoreCase(currentRole)) { %>
+      <a href="attendance.jsp">Attendance</a>
+      <a href="marks.jsp">Marks</a>
+      <a href="listStudents.jsp">Students</a>
+      <a href="listCourses.jsp">Courses</a>
+  <% } %>
+
+  <% if ("student".equalsIgnoreCase(currentRole)) { %>
+      <a href="profile.jsp">Profile</a>
+      <a href="attendance.jsp">Attendance</a>
+      <a href="marks.jsp">Marks</a>
+      <a href="listCourses.jsp">Courses</a>
+  <% } %>
+
+  <a href="login.html">Logout</a>
+</div>

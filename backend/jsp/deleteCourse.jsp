@@ -19,15 +19,19 @@ if (!"admin".equalsIgnoreCase(role)) {
 
 String idStr = request.getParameter("id");
 if (idStr == null || idStr.trim().isEmpty()) {
-    response.sendRedirect("listStudents.jsp");
+    idStr = request.getParameter("course_id");
+}
+
+if (idStr == null || idStr.trim().isEmpty()) {
+    response.sendRedirect("listCourses.jsp");
     return;
 }
 
-int studentId = 0;
+int courseId = 0;
 try {
-    studentId = Integer.parseInt(idStr);
+    courseId = Integer.parseInt(idStr);
 } catch (Exception e) {
-    response.sendRedirect("listStudents.jsp");
+    response.sendRedirect("listCourses.jsp");
     return;
 }
 
@@ -42,52 +46,40 @@ try {
     con = DriverManager.getConnection(URL, USER, PASS);
     con.setAutoCommit(false);
 
-    PreparedStatement psFind = con.prepareStatement(
-        "SELECT email FROM student WHERE student_id=?"
+    PreparedStatement psDeleteFacultyCourse = con.prepareStatement(
+        "DELETE FROM faculty_course WHERE course_id=?"
     );
-    psFind.setInt(1, studentId);
-    ResultSet rsFind = psFind.executeQuery();
-
-    String studentEmail = "";
-    if (rsFind.next()) {
-        studentEmail = rsFind.getString("email");
-    } else {
-        rsFind.close();
-        psFind.close();
-        con.close();
-        response.sendRedirect("listStudents.jsp");
-        return;
-    }
-    rsFind.close();
-    psFind.close();
+    psDeleteFacultyCourse.setInt(1, courseId);
+    psDeleteFacultyCourse.executeUpdate();
+    psDeleteFacultyCourse.close();
 
     PreparedStatement psDeleteAttendance = con.prepareStatement(
-        "DELETE FROM attendance WHERE student_id=?"
+        "DELETE FROM attendance WHERE course_id=?"
     );
-    psDeleteAttendance.setInt(1, studentId);
+    psDeleteAttendance.setInt(1, courseId);
     psDeleteAttendance.executeUpdate();
     psDeleteAttendance.close();
 
     PreparedStatement psDeleteMarks = con.prepareStatement(
-        "DELETE FROM marks WHERE student_id=?"
+        "DELETE FROM marks WHERE course_id=?"
     );
-    psDeleteMarks.setInt(1, studentId);
+    psDeleteMarks.setInt(1, courseId);
     psDeleteMarks.executeUpdate();
     psDeleteMarks.close();
 
-    PreparedStatement psDeleteStudent = con.prepareStatement(
-        "DELETE FROM student WHERE student_id=?"
+    PreparedStatement psDeleteAssignment = con.prepareStatement(
+        "DELETE FROM assignment WHERE course_id=?"
     );
-    psDeleteStudent.setInt(1, studentId);
-    psDeleteStudent.executeUpdate();
-    psDeleteStudent.close();
+    psDeleteAssignment.setInt(1, courseId);
+    psDeleteAssignment.executeUpdate();
+    psDeleteAssignment.close();
 
-    PreparedStatement psDeleteUser = con.prepareStatement(
-        "DELETE FROM users WHERE email=? AND role='student'"
+    PreparedStatement psDeleteCourse = con.prepareStatement(
+        "DELETE FROM course WHERE course_id=?"
     );
-    psDeleteUser.setString(1, studentEmail);
-    psDeleteUser.executeUpdate();
-    psDeleteUser.close();
+    psDeleteCourse.setInt(1, courseId);
+    psDeleteCourse.executeUpdate();
+    psDeleteCourse.close();
 
     con.commit();
 
@@ -104,5 +96,5 @@ try {
     } catch (Exception ex) {}
 }
 
-response.sendRedirect("listStudents.jsp");
+response.sendRedirect("listCourses.jsp");
 %>

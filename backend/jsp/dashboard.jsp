@@ -18,7 +18,7 @@
     <a href="attendance.jsp">Attendance</a>
     <a href="marks.jsp">Marks</a>
     <a href="profile.jsp">Profile</a>
-    <a href="login.html">Logout</a>
+    <a href="logout.jsp">Logout</a>
   </div>
 
   <div class="main">

@@ -25,23 +25,21 @@ String successMessage = "";
 String errorMessage = "";
 
 String idStr = request.getParameter("id");
-if (idStr == null || idStr.trim().isEmpty()) {
-    idStr = request.getParameter("course_id");
-}
+int facultyId = 0;
+
+String facultyName = "";
+String facultyEmail = "";
+String department = "";
 
 if (idStr == null || idStr.trim().isEmpty()) {
-    response.sendRedirect("listCourses.jsp");
+    response.sendRedirect("listFaculty.jsp");
     return;
 }
 
-int courseId = 0;
-String code = "";
-String name = "";
-
 try {
-    courseId = Integer.parseInt(idStr);
+    facultyId = Integer.parseInt(idStr);
 } catch (Exception e) {
-    response.sendRedirect("listCourses.jsp");
+    response.sendRedirect("listFaculty.jsp");
     return;
 }
 
@@ -52,40 +50,65 @@ try {
     con = DriverManager.getConnection(URL, USER, PASS);
 
     if ("POST".equalsIgnoreCase(request.getMethod())) {
-        String newCode = request.getParameter("course_code");
-        String newName = request.getParameter("course_name");
+        String newName = request.getParameter("name");
+        String newEmail = request.getParameter("email");
+        String newDept = request.getParameter("department");
 
-        PreparedStatement psUpdate = con.prepareStatement(
-            "UPDATE course SET course_code=?, course_name=? WHERE course_id=?"
+        con.setAutoCommit(false);
+
+        PreparedStatement psOld = con.prepareStatement(
+            "SELECT email FROM faculty WHERE faculty_id=?"
         );
-        psUpdate.setString(1, newCode);
-        psUpdate.setString(2, newName);
-        psUpdate.setInt(3, courseId);
+        psOld.setInt(1, facultyId);
+        ResultSet rsOld = psOld.executeQuery();
 
-        int rows = psUpdate.executeUpdate();
-        psUpdate.close();
-
-        if (rows > 0) {
-            successMessage = "Course updated successfully.";
+        String oldEmail = "";
+        if (rsOld.next()) {
+            oldEmail = rsOld.getString("email");
         } else {
-            errorMessage = "Course record not found.";
+            throw new Exception("Faculty record not found.");
         }
+        rsOld.close();
+        psOld.close();
+
+        PreparedStatement psFaculty = con.prepareStatement(
+            "UPDATE faculty SET faculty_name=?, email=?, department=? WHERE faculty_id=?"
+        );
+        psFaculty.setString(1, newName);
+        psFaculty.setString(2, newEmail);
+        psFaculty.setString(3, newDept);
+        psFaculty.setInt(4, facultyId);
+        psFaculty.executeUpdate();
+        psFaculty.close();
+
+        PreparedStatement psUsers = con.prepareStatement(
+            "UPDATE users SET full_name=?, email=? WHERE email=? AND role='faculty'"
+        );
+        psUsers.setString(1, newName);
+        psUsers.setString(2, newEmail);
+        psUsers.setString(3, oldEmail);
+        psUsers.executeUpdate();
+        psUsers.close();
+
+        con.commit();
+        successMessage = "Faculty record updated successfully.";
     }
 
     PreparedStatement ps = con.prepareStatement(
-        "SELECT course_code, course_name FROM course WHERE course_id=?"
+        "SELECT * FROM faculty WHERE faculty_id=?"
     );
-    ps.setInt(1, courseId);
+    ps.setInt(1, facultyId);
     ResultSet rs = ps.executeQuery();
 
     if (rs.next()) {
-        code = rs.getString("course_code");
-        name = rs.getString("course_name");
+        facultyName = rs.getString("faculty_name");
+        facultyEmail = rs.getString("email");
+        department = rs.getString("department");
     } else {
         rs.close();
         ps.close();
         con.close();
-        response.sendRedirect("listCourses.jsp");
+        response.sendRedirect("listFaculty.jsp");
         return;
     }
 
@@ -93,10 +116,16 @@ try {
     ps.close();
 
 } catch (Exception e) {
+    try {
+        if (con != null) con.rollback();
+    } catch (Exception ex) {}
     errorMessage = "Error: " + e.getMessage();
 } finally {
     try {
-        if (con != null) con.close();
+        if (con != null) {
+            con.setAutoCommit(true);
+            con.close();
+        }
     } catch (Exception ex) {}
 }
 %>
@@ -105,7 +134,7 @@ try {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Update Course - SmartEduConnect</title>
+    <title>Update Faculty - SmartEduConnect</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -122,9 +151,9 @@ try {
         <a href="addStudent.jsp">Add Student</a>
         <a href="listStudents.jsp">Manage Students</a>
         <a href="addFaculty.jsp">Add Faculty</a>
-        <a href="listFaculty.jsp">Manage Faculty</a>
+        <a class="active" href="listFaculty.jsp">Manage Faculty</a>
         <a href="addCourse.jsp">Add Course</a>
-        <a class="active" href="listCourses.jsp">Manage Courses</a>
+        <a href="listCourses.jsp">Manage Courses</a>
         <a href="assignCourseFaculty.jsp">Assign Courses</a>
 
         <div class="nav-section">Monitoring</div>
@@ -136,7 +165,7 @@ try {
 
     <div class="main">
         <div class="topbar">
-            <h2>Update Course</h2>
+            <h2>Update Faculty</h2>
             <div class="user-meta"><%= emailSession %></div>
         </div>
 
@@ -152,35 +181,40 @@ try {
 
             <div class="page-header">
                 <div class="page-title">
-                    <h1>Edit Course Record</h1>
-                    <p>Update course information in the SmartEduConnect academic portal.</p>
+                    <h1>Edit Faculty Record</h1>
+                    <p>Update faculty information in the SmartEduConnect academic portal.</p>
                 </div>
 
                 <div class="page-actions">
-                    <a class="btn btn-secondary" href="listCourses.jsp">Back to Course Records</a>
+                    <a class="btn btn-secondary" href="listFaculty.jsp">Back to Faculty Records</a>
                 </div>
             </div>
 
             <div class="card form-shell">
-                <h3 class="card-title">Course Details</h3>
-                <p class="card-subtitle">Modify the course record below.</p>
+                <h3 class="card-title">Faculty Details</h3>
+                <p class="card-subtitle">Modify the faculty record below.</p>
 
                 <form method="post">
                     <div class="form-grid">
                         <div class="field">
-                            <label>Course Code</label>
-                            <input type="text" name="course_code" value="<%= code %>" required>
+                            <label>Faculty Name</label>
+                            <input type="text" name="name" value="<%= facultyName %>" required>
                         </div>
 
                         <div class="field">
-                            <label>Course Name</label>
-                            <input type="text" name="course_name" value="<%= name %>" required>
+                            <label>Faculty Email</label>
+                            <input type="email" name="email" value="<%= facultyEmail %>" required>
+                        </div>
+
+                        <div class="field">
+                            <label>Department</label>
+                            <input type="text" name="department" value="<%= department %>" required>
                         </div>
                     </div>
 
                     <div class="form-actions">
-                        <button class="btn" type="submit">Update Course</button>
-                        <a class="btn btn-secondary" href="listCourses.jsp">Cancel</a>
+                        <button class="btn" type="submit">Update Faculty</button>
+                        <a class="btn btn-secondary" href="listFaculty.jsp">Cancel</a>
                     </div>
                 </form>
             </div>

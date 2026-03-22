@@ -1,5 +1,10 @@
 <%@ page import="java.sql.*" %>
 <%
+response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+response.setHeader("Pragma", "no-cache");
+response.setDateHeader("Expires", 0);
+
+
 String role = (String) session.getAttribute("role");
 String email = (String) session.getAttribute("email");
 
@@ -260,7 +265,7 @@ try {
         <a href="assignments.jsp">Assignments</a>
 
         <div class="nav-section">Session</div>
-        <a href="login.html">Logout</a>
+        <a href="logout.jsp">Logout</a>
     </div>
 
     <div class="main">

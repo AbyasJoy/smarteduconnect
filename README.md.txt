@@ -14,9 +14,7 @@ Backend:
 - JSP
 - Apache Tomcat
 
-Database:
-- MySQL
-- JDBC
+
 
 ## Features
 

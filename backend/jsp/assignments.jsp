@@ -1,6 +1,10 @@
 <%@ page import="java.sql.*" %>
 
 <%
+response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+response.setHeader("Pragma", "no-cache");
+response.setDateHeader("Expires", 0);
+
 String role = (String) session.getAttribute("role");
 String email = (String) session.getAttribute("email");
 
@@ -87,8 +91,8 @@ if ("faculty".equalsIgnoreCase(role) && "POST".equalsIgnoreCase(request.getMetho
         psInsert.setString(3, description);
         psInsert.setDate(4, dueDate);
         psInsert.setString(5, status);
-
         psInsert.executeUpdate();
+
         psInsert.close();
         con.close();
 
@@ -122,35 +126,27 @@ if ("student".equalsIgnoreCase(role)) {
         rsStudent.close();
         psStudent.close();
 
-        PreparedStatement psTotal = con.prepareStatement(
-            "SELECT COUNT(*) AS total_count FROM assignment"
-        );
+        PreparedStatement psTotal = con.prepareStatement("SELECT COUNT(*) FROM assignment");
         ResultSet rsTotal = psTotal.executeQuery();
-        if (rsTotal.next()) totalAssignments = rsTotal.getInt("total_count");
+        if (rsTotal.next()) totalAssignments = rsTotal.getInt(1);
         rsTotal.close();
         psTotal.close();
 
-        PreparedStatement psPending = con.prepareStatement(
-            "SELECT COUNT(*) AS pending_count FROM assignment WHERE status='Pending'"
-        );
+        PreparedStatement psPending = con.prepareStatement("SELECT COUNT(*) FROM assignment WHERE status='Pending'");
         ResultSet rsPending = psPending.executeQuery();
-        if (rsPending.next()) pendingAssignments = rsPending.getInt("pending_count");
+        if (rsPending.next()) pendingAssignments = rsPending.getInt(1);
         rsPending.close();
         psPending.close();
 
-        PreparedStatement psSubmitted = con.prepareStatement(
-            "SELECT COUNT(*) AS submitted_count FROM assignment WHERE status='Submitted'"
-        );
+        PreparedStatement psSubmitted = con.prepareStatement("SELECT COUNT(*) FROM assignment WHERE status='Submitted'");
         ResultSet rsSubmitted = psSubmitted.executeQuery();
-        if (rsSubmitted.next()) submittedAssignments = rsSubmitted.getInt("submitted_count");
+        if (rsSubmitted.next()) submittedAssignments = rsSubmitted.getInt(1);
         rsSubmitted.close();
         psSubmitted.close();
 
-        PreparedStatement psUpcoming = con.prepareStatement(
-            "SELECT COUNT(*) AS upcoming_count FROM assignment WHERE status='Upcoming'"
-        );
+        PreparedStatement psUpcoming = con.prepareStatement("SELECT COUNT(*) FROM assignment WHERE status='Upcoming'");
         ResultSet rsUpcoming = psUpcoming.executeQuery();
-        if (rsUpcoming.next()) upcomingAssignments = rsUpcoming.getInt("upcoming_count");
+        if (rsUpcoming.next()) upcomingAssignments = rsUpcoming.getInt(1);
         rsUpcoming.close();
         psUpcoming.close();
 
@@ -194,7 +190,7 @@ if ("faculty".equalsIgnoreCase(role)) {
                 "SELECT COUNT(*) " +
                 "FROM assignment a " +
                 "JOIN faculty_course fc ON a.course_id = fc.course_id " +
-                "WHERE fc.faculty_id = ?"
+                "WHERE fc.faculty_id=?"
             );
             psTotal.setInt(1, facultyId);
             ResultSet rsTotal = psTotal.executeQuery();
@@ -206,7 +202,7 @@ if ("faculty".equalsIgnoreCase(role)) {
                 "SELECT COUNT(*) " +
                 "FROM assignment a " +
                 "JOIN faculty_course fc ON a.course_id = fc.course_id " +
-                "WHERE fc.faculty_id = ? AND a.status='Pending'"
+                "WHERE fc.faculty_id=? AND a.status='Pending'"
             );
             psPending.setInt(1, facultyId);
             ResultSet rsPending = psPending.executeQuery();
@@ -218,7 +214,7 @@ if ("faculty".equalsIgnoreCase(role)) {
                 "SELECT COUNT(*) " +
                 "FROM assignment a " +
                 "JOIN faculty_course fc ON a.course_id = fc.course_id " +
-                "WHERE fc.faculty_id = ? AND a.status='Submitted'"
+                "WHERE fc.faculty_id=? AND a.status='Submitted'"
             );
             psSubmitted.setInt(1, facultyId);
             ResultSet rsSubmitted = psSubmitted.executeQuery();
@@ -230,7 +226,7 @@ if ("faculty".equalsIgnoreCase(role)) {
                 "SELECT COUNT(*) " +
                 "FROM assignment a " +
                 "JOIN faculty_course fc ON a.course_id = fc.course_id " +
-                "WHERE fc.faculty_id = ? AND a.status='Upcoming'"
+                "WHERE fc.faculty_id=? AND a.status='Upcoming'"
             );
             psUpcoming.setInt(1, facultyId);
             ResultSet rsUpcoming = psUpcoming.executeQuery();
@@ -238,6 +234,43 @@ if ("faculty".equalsIgnoreCase(role)) {
             rsUpcoming.close();
             psUpcoming.close();
         }
+
+        con.close();
+
+    } catch (Exception e) {
+        errorMessage = "DB Error: " + e.getMessage();
+    }
+}
+
+/* ---------- ADMIN DATA ---------- */
+if ("admin".equalsIgnoreCase(role)) {
+    try {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection con = DriverManager.getConnection(URL, USER, PASS);
+
+        PreparedStatement psTotal = con.prepareStatement("SELECT COUNT(*) FROM assignment");
+        ResultSet rsTotal = psTotal.executeQuery();
+        if (rsTotal.next()) totalAssignments = rsTotal.getInt(1);
+        rsTotal.close();
+        psTotal.close();
+
+        PreparedStatement psPending = con.prepareStatement("SELECT COUNT(*) FROM assignment WHERE status='Pending'");
+        ResultSet rsPending = psPending.executeQuery();
+        if (rsPending.next()) pendingAssignments = rsPending.getInt(1);
+        rsPending.close();
+        psPending.close();
+
+        PreparedStatement psSubmitted = con.prepareStatement("SELECT COUNT(*) FROM assignment WHERE status='Submitted'");
+        ResultSet rsSubmitted = psSubmitted.executeQuery();
+        if (rsSubmitted.next()) submittedAssignments = rsSubmitted.getInt(1);
+        rsSubmitted.close();
+        psSubmitted.close();
+
+        PreparedStatement psUpcoming = con.prepareStatement("SELECT COUNT(*) FROM assignment WHERE status='Upcoming'");
+        ResultSet rsUpcoming = psUpcoming.executeQuery();
+        if (rsUpcoming.next()) upcomingAssignments = rsUpcoming.getInt(1);
+        rsUpcoming.close();
+        psUpcoming.close();
 
         con.close();
 
@@ -331,6 +364,13 @@ if ("faculty".equalsIgnoreCase(role)) {
             margin-top: 10px;
         }
 
+        .assign-actions {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         @media (max-width: 900px) {
             .assign-grid,
             .assign-summary-grid {
@@ -351,6 +391,8 @@ if ("faculty".equalsIgnoreCase(role)) {
             <a href="studentDashboard.jsp">Dashboard</a>
         <% } else if ("faculty".equalsIgnoreCase(role)) { %>
             <a href="facultyDashboard.jsp">Dashboard</a>
+        <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="adminDashboard.jsp">Dashboard</a>
         <% } %>
 
         <div class="nav-section">Academic</div>
@@ -365,10 +407,19 @@ if ("faculty".equalsIgnoreCase(role)) {
             <a href="attendance.jsp">Manage Attendance</a>
             <a href="marks.jsp">Upload Marks</a>
             <a class="active" href="assignments.jsp">Assignments</a>
+        <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="addStudent.jsp">Add Student</a>
+            <a href="listStudents.jsp">Manage Students</a>
+            <a href="addFaculty.jsp">Add Faculty</a>
+            <a href="listFaculty.jsp">Manage Faculty</a>
+            <a href="addCourse.jsp">Add Course</a>
+            <a href="listCourses.jsp">Manage Courses</a>
+            <a href="assignCourseFaculty.jsp">Assign Courses</a>
+            <a class="active" href="assignments.jsp">Assignments Overview</a>
         <% } %>
 
         <div class="nav-section">Session</div>
-        <a href="login.html">Logout</a>
+        <a href="logout.jsp">Logout</a>
     </div>
 
     <div class="main">
@@ -387,7 +438,6 @@ if ("faculty".equalsIgnoreCase(role)) {
                 <div class="alert-error"><%= errorMessage %></div>
             <% } %>
 
-            <!-- ================= STUDENT VIEW ================= -->
             <% if ("student".equalsIgnoreCase(role)) { %>
 
             <div class="page-header">
@@ -438,8 +488,10 @@ try {
     );
 
     ResultSet rs = ps.executeQuery();
+    boolean hasData = false;
 
     while (rs.next()) {
+        hasData = true;
         String status = rs.getString("status");
         String statusClass = "pending";
         if ("Submitted".equalsIgnoreCase(status)) statusClass = "submitted";
@@ -453,6 +505,15 @@ try {
                         Due: <b><%= rs.getDate("due_date") %></b>
                     </div>
                     <p><%= rs.getString("description") %></p>
+                </div>
+<%
+    }
+
+    if (!hasData) {
+%>
+                <div class="assign-card">
+                    <div class="assign-title">No Assignments Available</div>
+                    <p>No assignment records are available right now.</p>
                 </div>
 <%
     }
@@ -480,14 +541,13 @@ try {
 
             <% } %>
 
-            <!-- ================= FACULTY VIEW ================= -->
             <% if ("faculty".equalsIgnoreCase(role)) { %>
 
             <div class="page-header">
                 <div class="page-title">
                     <h1>Assignments Management</h1>
                     <p>
-                        Create and manage assignments only for your assigned courses.
+                        Create, update, delete, and manage assignments only for your assigned courses.
                         <% if(facultyName != null && !facultyName.isEmpty()) { %>
                         <br><span style="font-size:15px; color:#6b7280;"><b><%= facultyName %></b></span>
                         <% } %>
@@ -554,11 +614,12 @@ try {
                                     rsCourses.close();
                                     psCourses.close();
                                     con.close();
-
-                                } catch (Exception e) {
+                                } catch (Exception ex) {
                                 %>
                                 <option value="">Error loading courses</option>
-                                <% } %>
+                                <%
+                                }
+                                %>
                             </select>
                         </div>
 
@@ -576,12 +637,12 @@ try {
                             <label>Status</label>
                             <select name="status" required>
                                 <option value="Pending">Pending</option>
-                                <option value="Upcoming">Upcoming</option>
                                 <option value="Submitted">Submitted</option>
+                                <option value="Upcoming">Upcoming</option>
                             </select>
                         </div>
 
-                        <div class="field" style="grid-column:1 / -1;">
+                        <div class="field" style="grid-column: 1 / -1;">
                             <label>Description</label>
                             <textarea name="description" required></textarea>
                         </div>
@@ -593,6 +654,8 @@ try {
                 </form>
             </div>
 
+            <div style="height:24px;"></div>
+
             <div class="assign-grid">
 <%
 try {
@@ -602,17 +665,19 @@ try {
     PreparedStatement ps = con.prepareStatement(
         "SELECT a.assignment_id, a.title, a.description, a.due_date, a.status, c.course_code, c.course_name " +
         "FROM assignment a " +
-        "JOIN course c ON a.course_id = c.course_id " +
         "JOIN faculty_course fc ON a.course_id = fc.course_id " +
         "JOIN faculty f ON fc.faculty_id = f.faculty_id " +
+        "JOIN course c ON a.course_id = c.course_id " +
         "WHERE f.email = ? " +
         "ORDER BY a.due_date ASC"
     );
     ps.setString(1, email);
 
     ResultSet rs = ps.executeQuery();
+    boolean hasData = false;
 
     while (rs.next()) {
+        hasData = true;
         String status = rs.getString("status");
         String statusClass = "pending";
         if ("Submitted".equalsIgnoreCase(status)) statusClass = "submitted";
@@ -626,6 +691,22 @@ try {
                         Due: <b><%= rs.getDate("due_date") %></b>
                     </div>
                     <p><%= rs.getString("description") %></p>
+
+                    <div class="assign-actions">
+                        <a class="btn btn-secondary" href="updateAssignment.jsp?id=<%= rs.getInt("assignment_id") %>">Edit</a>
+                        <a class="btn btn-danger"
+                           href="deleteAssignment.jsp?id=<%= rs.getInt("assignment_id") %>"
+                           onclick="return confirm('Delete this assignment?');">Delete</a>
+                    </div>
+                </div>
+<%
+    }
+
+    if (!hasData) {
+%>
+                <div class="assign-card">
+                    <div class="assign-title">No Assignments Available</div>
+                    <p>No assignments are mapped to your assigned courses yet.</p>
                 </div>
 <%
     }
@@ -648,7 +729,105 @@ try {
             <div class="card" style="margin-top:24px;">
                 <h3 class="card-title">Faculty Access Scope</h3>
                 <p class="card-subtitle">Role permissions inside SmartEduConnect.</p>
-                <p>Faculty can create and manage assignments only for their assigned courses. Student-side assignment view remains read-only.</p>
+                <p>Faculty can create, update, delete, and manage assignments only for their assigned courses. Institution-wide academic control remains restricted to admin workflows.</p>
+            </div>
+
+            <% } %>
+
+            <% if ("admin".equalsIgnoreCase(role)) { %>
+
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Assignments Overview</h1>
+                    <p>View and monitor all assignments across the academic portal.</p>
+                </div>
+            </div>
+
+            <div class="assign-summary-grid">
+                <div class="assign-summary-card">
+                    <h4>Total Assignments</h4>
+                    <div class="big"><%= totalAssignments %></div>
+                </div>
+
+                <div class="assign-summary-card">
+                    <h4>Pending</h4>
+                    <div class="big"><%= pendingAssignments %></div>
+                </div>
+
+                <div class="assign-summary-card">
+                    <h4>Submitted</h4>
+                    <div class="big"><%= submittedAssignments %></div>
+                </div>
+
+                <div class="assign-summary-card">
+                    <h4>Upcoming</h4>
+                    <div class="big"><%= upcomingAssignments %></div>
+                </div>
+            </div>
+
+            <div class="assign-grid">
+<%
+try {
+    Class.forName("com.mysql.cj.jdbc.Driver");
+    Connection con = DriverManager.getConnection(URL, USER, PASS);
+
+    PreparedStatement ps = con.prepareStatement(
+        "SELECT a.assignment_id, a.title, a.description, a.due_date, a.status, c.course_code, c.course_name " +
+        "FROM assignment a " +
+        "JOIN course c ON a.course_id = c.course_id " +
+        "ORDER BY a.due_date ASC"
+    );
+
+    ResultSet rs = ps.executeQuery();
+    boolean hasData = false;
+
+    while (rs.next()) {
+        hasData = true;
+        String status = rs.getString("status");
+        String statusClass = "pending";
+        if ("Submitted".equalsIgnoreCase(status)) statusClass = "submitted";
+        else if ("Upcoming".equalsIgnoreCase(status)) statusClass = "upcoming";
+%>
+                <div class="assign-card">
+                    <div class="assign-status <%= statusClass %>"><%= status %></div>
+                    <div class="assign-title"><%= rs.getString("title") %></div>
+                    <div class="assign-meta">
+                        Course: <b><%= rs.getString("course_code") %></b> - <%= rs.getString("course_name") %><br>
+                        Due: <b><%= rs.getDate("due_date") %></b>
+                    </div>
+                    <p><%= rs.getString("description") %></p>
+                </div>
+<%
+    }
+
+    if (!hasData) {
+%>
+                <div class="assign-card">
+                    <div class="assign-title">No Assignments Available</div>
+                    <p>No assignment records are available in the system yet.</p>
+                </div>
+<%
+    }
+
+    rs.close();
+    ps.close();
+    con.close();
+
+} catch (Exception e) {
+%>
+                <div class="assign-card">
+                    <div class="assign-title">Error Loading Assignments</div>
+                    <p style="color:red;"><%= e.getMessage() %></p>
+                </div>
+<%
+}
+%>
+            </div>
+
+            <div class="card" style="margin-top:24px;">
+                <h3 class="card-title">Admin Access Scope</h3>
+                <p class="card-subtitle">Role permissions inside SmartEduConnect.</p>
+                <p>Admins can monitor assignment activity across all courses and departments. Assignment creation is handled by faculty for assigned courses, while admins retain institution-wide oversight.</p>
             </div>
 
             <% } %>

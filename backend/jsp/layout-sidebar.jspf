@@ -30,5 +30,5 @@ String currentRole = (String) session.getAttribute("role");
       <a href="listCourses.jsp">Courses</a>
   <% } %>
 
-  <a href="login.html">Logout</a>
+  <a href="logout.jsp">Logout</a>
 </div>
